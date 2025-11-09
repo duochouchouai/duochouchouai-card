@@ -1,0 +1,407 @@
+components:
+  # 1. 安全方案（JWT 认证）
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 登录后获取的 JWT Token，格式：Bearer {token}
+
+  # 2. 数据模型（所有接口请求/响应的数据结构）
+  schemas:
+    # 认证相关
+    LoginResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: 登录成功
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEwMDEsIm5hbWUiOiLnlLXopoHvvIgxMjMiLCJpYXQiOjE3MzEzMzQwMDAsImV4cCI6MTczMTQyMDQwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+            refreshToken:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEwMDEsImV4cCI6MTczMzAyNjAwMH0.7Z9f8a7s6d5f4g3h2j1k0l9m8n7o6p5q4r3s2t1u0v9w8x7y6z"
+            userInfo:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  example: 1001
+                username:
+                  type: string
+                  example: test_user123
+                nickname:
+                  type: string
+                  example: 测试用户_123
+                phone:
+                  type: string
+                  example: 13800138000
+                email:
+                  type: string
+                  example: test123@example.com
+
+    TokenRefresh:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: 过期的刷新 Token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEwMDEsImV4cCI6MTczMzAyNjAwMH0.7Z9f8a7s6d5f4g3h2j1k0l9m8n7o6p5q4r3s2t1u0v9w8x7y6z"
+
+    TokenResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Token 刷新成功
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEwMDEsIm5hbWUiOiLnlLXopoHvvIgxMjMiLCJpYXQiOjE3MzEzMzUwMDAsImV4cCI6MTczMTQyMTQwMH0.TflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5d"
+            refreshToken:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEwMDEsImV4cCI6MTczMzEzMzAwMH0.8Z9f8a7s6d5f4g3h2j1k0l9m8n7o6p5q4r3s2t1u0v9w8x7y6z"
+
+    # 二维码相关
+    QrCodeGenerateRequest:
+      type: object
+      required:
+        - cardId
+      properties:
+        cardId:
+          type: integer
+          minimum: 1
+          description: 个人名片 ID（需属于当前登录用户）
+          example: 1001
+        includeContact:
+          type: boolean
+          default: true
+          description: 是否在二维码中包含完整联系信息
+          example: true
+
+    QrCodeGenerateResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: 二维码生成成功
+        data:
+          type: object
+          properties:
+            qrCodeBase64:
+              type: string
+              description: 二维码 Base64 编码（前端可直接用 <img> 标签展示）
+            cardUniqueId:
+              type: string
+              format: uuid
+              description: 名片唯一标识（二维码核心内容）
+              example: "f8b8a3e2-7c3a-4b1d-9a7c-8e6f91b2c3d4"
+            cardId:
+              type: integer
+              example: 1001
+
+    QrCodeDisplayResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: 二维码获取成功
+        data:
+          type: object
+          properties:
+            qrCodeBase64:
+              type: string
+              description: 二维码 Base64 编码（前端直接渲染）
+            cardUniqueId:
+              type: string
+              format: uuid
+              example: "f8b8a3e2-7c3a-4b1d-9a7c-8e6f91b2c3d4"
+            lastGenerateTime:
+              type: string
+              format: date-time
+              description: 最后生成时间
+              example: "2025-11-10T14:30:00Z"
+
+    # 保存他人名片相关
+    SaveOtherCardRequest:
+      type: object
+      required:
+        - cardUniqueId
+      properties:
+        cardUniqueId:
+          type: string
+          format: uuid
+          description: 从他人二维码中解析的唯一标识
+          example: "f8b8a3e2-7c3a-4b1d-9a7c-8e6f91b2c3d4"
+        remark:
+          type: string
+          maxLength: 50
+          description: 对该名片的备注（可选）
+          example: "XX公司-产品经理"
+
+    SaveOtherCardResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: 名片保存成功
+        data:
+          type: object
+          properties:
+            savedCardId:
+              type: integer
+              description: 保存记录的ID
+              example: 2001
+            targetCardInfo:
+              type: object
+              description: 被保存的名片核心信息
+              properties:
+                cardId:
+                  type: integer
+                  example: 1001
+                userName:
+                  type: string
+                  example: "张三"
+                department:
+                  type: string
+                  example: "产品部"
+                contactPhone:
+                  type: string
+                  example: "13800138000"
+                company:
+                  type: string
+                  example: "XX科技有限公司"
+
+    SavedCardListItem:
+      type: object
+      properties:
+        savedCardId:
+          type: integer
+          example: 2001
+        remark:
+          type: string
+          example: "XX公司-产品经理"
+        saveTime:
+          type: string
+          format: date-time
+          example: "2025-11-10T15:00:00Z"
+        cardInfo:
+          type: object
+          properties:
+            cardUniqueId:
+              type: string
+              format: uuid
+              example: "f8b8a3e2-7c3a-4b1d-9a7c-8e6f91b2c3d4"
+            userName:
+              type: string
+              example: "张三"
+            department:
+              type: string
+              example: "产品部"
+            contact:
+              type: object
+              properties:
+                phone:
+                  type: string
+                  example: "13800138000"
+                email:
+                  type: string
+                  example: "zhangsan@example.com"
+            company:
+              type: string
+              example: "XX科技有限公司"
+
+    SavedCardListResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: 查询成功
+        data:
+          type: object
+          properties:
+            list:
+              type: array
+              items:
+                $ref: '#/components/schemas/SavedCardListItem'
+            total:
+              type: integer
+              description: 总条数
+              example: 28
+            page:
+              type: integer
+              example: 1
+            pageSize:
+              type: integer
+              example: 10
+            totalPage:
+              type: integer
+              example: 3
+
+  # 3. 响应组件（统一错误/成功响应格式）
+  responses:
+    SuccessCreate:
+      description: 创建成功
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 201
+              message:
+                type: string
+                example: 注册成功
+              data:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    example: 1001
+                  username:
+                    type: string
+                    example: test_user123
+                  nickname:
+                    type: string
+                    example: 测试用户_123
+
+    ParamError:
+      description: 参数错误
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 400
+              message:
+                type: string
+                example: 参数错误
+              details:
+                type: array
+                items:
+                  type: string
+                example: ["手机号格式不正确", "密码长度不足8位"]
+
+    Conflict:
+      description: 资源冲突
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 409
+              message:
+                type: string
+                example: 资源冲突
+              details:
+                type: array
+                items:
+                  type: string
+                example: ["该用户名已被注册"]
+
+    Unauthorized:
+      description: 未授权
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 401
+              message:
+                type: string
+                example: 未授权
+              details:
+                type: array
+                items:
+                  type: string
+                example: ["账号或密码不正确"]
+
+    Forbidden:
+      description: 禁止访问
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 403
+              message:
+                type: string
+                example: 禁止访问
+              details:
+                type: array
+                items:
+                  type: string
+                example: ["仅能生成自己的名片二维码"]
+
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 404
+              message:
+                type: string
+                example: 资源不存在
+              details:
+                type: array
+                items:
+                  type: string
+                example: ["该名片不存在"]
+
+    ServerError:
+      description: 服务器内部错误
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 500
+              message:
+                type: string
+                example: 服务器内部错误
+              details:
+                type: array
+                items:
+                  type: string
+                example: ["数据库连接失败"]
