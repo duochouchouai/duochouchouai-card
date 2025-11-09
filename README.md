@@ -24,8 +24,6 @@ bash
 cd nodejs
 # 安装依赖
 npm install
-# 或
-yarn install
 配置说明
 静态文件：public 目录用于存放静态资源（如 code.yaml Swagger 配置文件），已通过 Express 自动暴露
 端口配置：默认端口 3000，可在 server.js 中修改 app.listen(3000, ...) 自定义端口
@@ -35,34 +33,6 @@ bash
 # 开发环境启动（node 直接运行）
 node server.js
 
-# 或使用 nodemon 实现热重载（推荐开发时使用）
-npm install -g nodemon
-nodemon server.js
-访问系统
-服务器地址：http://localhost:3000
-Swagger 接口文档：http://localhost:3000/swagger（所有接口可在线调试）
-📂 项目目录结构
-plaintext
-duochouchouai-card/
-├── nodejs/                # 服务器核心目录
-│   ├── server.js          # 入口文件（配置 Express、路由、中间件）
-│   ├── node_modules/      # 依赖包（安装后自动生成）
-│   ├── package.json       # 项目配置（依赖、脚本）
-│   └── ...                # 后续可扩展：路由拆分、数据模型、工具类等
-├── public/                # 静态文件目录
-│   └── code.yaml          # Swagger 接口文档配置文件
-├── .git/                  # Git 版本控制目录（无需手动修改）
-├── .gitattributes         # Git 换行符配置（适配多系统）
-└── README.md              # 项目说明文档（当前文件）
-🛠️ 核心技术栈
-技术	作用
-Express	Node.js 后端框架（处理 HTTP 请求）
-JWT	身份认证（生成 / 验证 Token）
-qrcode	生成名片二维码
-swagger-ui-express	可视化接口文档生成工具
-cors	跨域请求支持
-@types/node	TypeScript 类型定义（可选）
-validator	数据校验（可选）
 📌 接口文档使用
 启动服务后，访问 http://localhost:3000/swagger
 无需登录即可查看所有接口，需认证的接口（如二维码生成）需先调用「登录接口」获取 Token
