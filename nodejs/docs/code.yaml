@@ -1,4 +1,4 @@
-/paths:
+paths:
   /api/v1/card/qrcode/generate:
     post:
       summary: 生成个人名片二维码
