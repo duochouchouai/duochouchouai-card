@@ -11,13 +11,13 @@ Node.js ≥ 14.x（推荐 16.x 或 18.x）
 npm ≥ 6.x
 Git（版本控制）
 🚀 快速开始
-1. 克隆仓库
+克隆仓库
 bash
 # 克隆远程仓库到本地（替换为你的远程仓库地址）
 git clone https://gitee.com/你的用户名/duochouchouai-card.git
 # 进入项目根目录
 cd duochouchouai-card
-2. 安装依赖
+安装依赖
 进入 nodejs 目录（服务器核心目录）安装依赖：
 bash
 # 进入服务器目录
@@ -26,11 +26,11 @@ cd nodejs
 npm install
 # 或
 yarn install
-3. 配置说明
+配置说明
 静态文件：public 目录用于存放静态资源（如 code.yaml Swagger 配置文件），已通过 Express 自动暴露
 端口配置：默认端口 3000，可在 server.js 中修改 app.listen(3000, ...) 自定义端口
 JWT 密钥：建议在生产环境中配置自定义密钥（当前为演示密钥，需修改 server.js 中 JWT 签名逻辑）
-4. 启动服务
+启动服务
 bash
 # 开发环境启动（node 直接运行）
 node server.js
@@ -38,7 +38,7 @@ node server.js
 # 或使用 nodemon 实现热重载（推荐开发时使用）
 npm install -g nodemon
 nodemon server.js
-5. 访问系统
+访问系统
 服务器地址：http://localhost:3000
 Swagger 接口文档：http://localhost:3000/swagger（所有接口可在线调试）
 📂 项目目录结构
