@@ -1,0 +1,394 @@
+paths:
+  /api/v1/card/qrcode/generate:
+    post:
+      summary: 生成个人名片二维码
+      description: |
+        为当前用户的名片生成唯一二维码（需授权）
+        - 二维码包含名片唯一标识（cardUniqueId）和核心联系信息
+        - 支持重复生成（覆盖旧二维码），生成后自动缓存 Base64 格式
+        - 仅能生成自己的名片二维码，不可生成他人名片
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cardId
+              properties:
+                cardId:
+                  type: integer
+                  minimum: 1
+                  description: 个人名片 ID（需属于当前登录用户）
+                  example: 1001
+                includeContact:
+                  type: boolean
+                  default: true
+                  description: 是否在二维码中包含完整联系信息（默认包含）
+                  example: true
+            examples:
+              生成默认二维码:
+                summary: 生成包含完整联系信息的二维码
+                value:
+                  cardId: 1001
+              生成仅含标识的二维码:
+                summary: 仅包含cardUniqueId（通过标识查询联系信息）
+                value:
+                  cardId: 1001
+                  includeContact: false
+      responses:
+        '200':
+          description: 生成成功（返回二维码 Base64 编码）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: 二维码生成成功
+                  data:
+                    type: object
+                    properties:
+                      qrCodeBase64:
+                        type: string
+                        description: 二维码 Base64 编码（前端可直接用<img>标签展示）
+                        example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+                      cardUniqueId:
+                        type: string
+                        format: uuid
+                        description: 名片唯一标识（二维码核心内容）
+                        example: "f8b8a3e2-7c3a-4b1d-9a7c-8e6f91b2c3d4"
+                      cardId:
+                        type: integer
+                        example: 1001
+        '400':
+          $ref: '#/components/responses/ParamError'
+          examples:
+            参数缺失:
+              value:
+                code: 400
+                message: 参数错误
+                details: ["名片ID不能为空", "名片ID必须为正整数"]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          examples:
+            无权限生成:
+              value:
+                code: 403
+                message: 禁止访问
+                details: ["仅能生成自己的名片二维码"]
+        '404':
+          $ref: '#/components/responses/NotFound'
+          examples:
+            名片不存在:
+              value:
+                code: 404
+                message: 资源不存在
+                details: ["当前用户的该名片不存在"]
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/v1/card/qrcode/display:
+    get:
+      summary: 展示个人名片二维码
+      description: |
+        获取已生成的个人名片二维码（需授权）
+        - 优先返回缓存的 Base64 编码，未生成则自动触发生成
+        - 支持直接用于前端展示，无需二次处理
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cardId
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: 个人名片 ID（需属于当前登录用户）
+          example: 1001
+      responses:
+        '200':
+          description: 获取成功（返回二维码 Base64 编码）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: 二维码获取成功
+                  data:
+                    type: object
+                    properties:
+                      qrCodeBase64:
+                        type: string
+                        description: 二维码 Base64 编码（前端直接渲染）
+                        example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+                      cardUniqueId:
+                        type: string
+                        format: uuid
+                        example: "f8b8a3e2-7c3a-4b1d-9a7c-8e6f91b2c3d4"
+                      lastGenerateTime:
+                        type: string
+                        format: date-time
+                        description: 最后生成时间
+                        example: "2025-11-10T14:30:00Z"
+        '400':
+          $ref: '#/components/responses/ParamError'
+          examples:
+            参数错误:
+              value:
+                code: 400
+                message: 参数错误
+                details: ["名片ID不能为空", "名片ID必须为正整数"]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/v1/card/save-other:
+    post:
+      summary: 保存他人名片
+      description: |
+        扫描他人名片二维码后，保存对方名片到个人收藏（需授权）
+        - 需传入从二维码解析的 cardUniqueId
+        - 不可保存自己的名片
+        - 同一名片仅能保存一次，重复保存返回已保存提示
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cardUniqueId
+              properties:
+                cardUniqueId:
+                  type: string
+                  format: uuid
+                  description: 从他人二维码中解析的唯一标识
+                  example: "f8b8a3e2-7c3a-4b1d-9a7c-8e6f91b2c3d4"
+                remark:
+                  type: string
+                  maxLength: 50
+                  description: 对该名片的备注（可选）
+                  example: "XX公司-产品经理"
+            examples:
+              保存他人名片:
+                summary: 保存并添加备注
+                value:
+                  cardUniqueId: "f8b8a3e2-7c3a-4b1d-9a7c-8e6f91b2c3d4"
+                  remark: "XX公司-产品经理-2025展会"
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: 名片保存成功
+                  data:
+                    type: object
+                    properties:
+                      savedCardId:
+                        type: integer
+                        description: 保存记录的ID
+                        example: 2001
+                      targetCardInfo:
+                        type: object
+                        description: 被保存的名片核心信息
+                        properties:
+                          cardId:
+                            type: integer
+                            example: 1001
+                          userName:
+                            type: string
+                            example: "张三"
+                          department:
+                            type: string
+                            example: "产品部"
+                          contactPhone:
+                            type: string
+                            example: "13800138000"
+                          company:
+                            type: string
+                            example: "XX科技有限公司"
+        '400':
+          $ref: '#/components/responses/ParamError'
+          examples:
+            参数错误:
+              value:
+                code: 400
+                message: 参数错误
+                details: ["名片唯一标识不能为空", "备注长度不能超过50字"]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+          examples:
+            禁止保存自己:
+              value:
+                code: 403
+                message: 禁止访问
+                details: ["不可保存自己的名片"]
+        '404':
+          $ref: '#/components/responses/NotFound'
+          examples:
+            名片不存在:
+              value:
+                code: 404
+                message: 资源不存在
+                details: ["该名片不存在或已被删除"]
+        '409':
+          $ref: '#/components/responses/Conflict'
+          examples:
+            已保存过:
+              value:
+                code: 409
+                message: 资源冲突
+                details: ["你已保存过该名片，无需重复保存"]
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/v1/card/saved/list:
+    get:
+      summary: 查询已保存的他人名片列表
+      description: |
+        获取当前用户已收藏的所有他人名片（需授权）
+        - 支持分页查询
+        - 返回名片核心信息和备注
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: 页码（默认第1页）
+          example: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: 每页条数（默认10条，最多50条）
+          example: 10
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 搜索关键词（匹配姓名、公司、备注）
+          example: "XX科技"
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: 查询成功
+                  data:
+                    type: object
+                    properties:
+                      list:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            savedCardId:
+                              type: integer
+                              example: 2001
+                              remark: "备注信息"
+                            remark:
+                              type: string
+                              example: "XX公司-产品经理"
+                            saveTime:
+                              type: string
+                              format: date-time
+                              example: "2025-11-10T15:00:00Z"
+                            cardInfo:
+                              type: object
+                              properties:
+                                cardUniqueId:
+                                  type: string
+                                  format: uuid
+                                  example: "f8b8a3e2-7c3a-4b1d-9a7c-8e6f91b2c3d4"
+                                userName:
+                                  type: string
+                                  example: "张三"
+                                department:
+                                  type: string
+                                  example: "产品部"
+                                contact:
+                                  type: object
+                                  properties:
+                                    phone:
+                                      type: string
+                                      example: "13800138000"
+                                    email:
+                                      type: string
+                                      example: "zhangsan@example.com"
+                                company:
+                                  type: string
+                                  example: "XX科技有限公司"
+                      total:
+                        type: integer
+                        description: 总条数
+                        example: 28
+                      page:
+                        type: integer
+                        example: 1
+                      pageSize:
+                        type: integer
+                        example: 10
+                      totalPage:
+                        type: integer
+                        example: 3
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/ParamError'
+          examples:
+            参数错误:
+              value:
+                code: 400
+                message: 参数错误
+                details: ["页码必须为正整数", "每页条数不能超过50"]
+        '500':
+          $ref: '#/components/responses/ServerError'
