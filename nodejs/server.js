@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
+const fs=require('fs');
 
 // 1. 数据库相关（替换原 pool，适配 Sequelize）
 const sequelize = require('./config/db'); // Sequelize 连接实例（原 config/db.js）
@@ -20,6 +21,7 @@ const swagger = require('./swagger'); // 确保 swagger.js 存在于项目根目
 const app = express();
 const PORT = process.env.PORT || 3000; // 优先读取环境变量，默认 3000
 
+
 // 4. 中间件配置（完全保留用户原配置）
 app.use(helmet()); // 安全头：防止常见 Web 漏洞
 app.use(cors({ 
@@ -32,8 +34,11 @@ app.use(morgan('dev')); // 日志中间件：开发环境打印请求日志
 
 // 5. 静态文件服务（保留，支持后续文件上传/预览）
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-// 如需前端静态文件（如 Swagger 静态资源），可启用以下行：
-// app.use(express.static(path.join(__dirname, 'public')));
+const qrcodeDir = path.join(__dirname, 'uploads', 'qrcode');
+if (!fs.existsSync(qrcodeDir)) {
+  fs.mkdirSync(qrcodeDir, { recursive: true }); // recursive: true 支持多级目录
+  console.log(`二维码目录创建成功：${qrcodeDir}`);
+}
 
 // 6. 路由挂载（适配你的路由结构）
 app.use(mainRoutes);
