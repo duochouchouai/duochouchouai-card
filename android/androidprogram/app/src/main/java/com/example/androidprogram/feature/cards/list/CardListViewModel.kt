@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.androidprogram.model.Card
 import com.example.androidprogram.repository.CardRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -12,6 +14,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class CardListViewModel(private val repo: CardRepository) : ViewModel() {
     private val _state = MutableStateFlow(CardListState())
     val state: StateFlow<CardListState> = _state
@@ -24,7 +27,7 @@ class CardListViewModel(private val repo: CardRepository) : ViewModel() {
         viewModelScope.launch {
             _state.update { it.copy(loading = true) }
             repo.getAll().collectLatest { list ->
-                _state.update { it.copy(loading = false, cards = list) }
+                _state.update { s -> s.copy(loading = false, cards = applySort(list, s.sort)) }
             }
         }
     }
@@ -34,7 +37,7 @@ class CardListViewModel(private val repo: CardRepository) : ViewModel() {
     init {
         viewModelScope.launch {
             queryFlow.debounce(150).flatMapLatest { q -> repo.search(q) }.collectLatest { list ->
-                _state.update { it.copy(cards = list) }
+                _state.update { s -> s.copy(cards = applySort(list, s.sort)) }
             }
         }
     }
@@ -53,6 +56,16 @@ class CardListViewModel(private val repo: CardRepository) : ViewModel() {
                 viewModelScope.launch { repo.update(card.copy(favorite = intent.favorite)) }
             }
             CardListIntent.Refresh -> load()
+            is CardListIntent.SortChanged -> {
+                _state.update { s -> s.copy(sort = intent.sort, cards = applySort(s.cards, intent.sort)) }
+            }
         }
+    }
+
+    private fun applySort(list: List<Card>, sort: String): List<Card> = when (sort) {
+        "name" -> list.sortedBy { it.name }
+        "company" -> list.sortedBy { it.company ?: "" }
+        "category" -> list.sortedWith(compareBy({ it.category ?: "" }, { -it.createdAt }))
+        else -> list.sortedByDescending { it.createdAt }
     }
 }

@@ -1,9 +1,23 @@
 package com.example.androidprogram.model
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "cards")
+@Entity(
+    tableName = "cards",
+    indices = [
+        Index(value = ["name"]),
+        Index(value = ["company"]),
+        Index(value = ["position"]),
+        Index(value = ["department"]),
+        Index(value = ["email"]),
+        Index(value = ["phone"]),
+        Index(value = ["address"]),
+        Index(value = ["note"]),
+        Index(value = ["category"])
+    ]
+)
 data class Card(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,

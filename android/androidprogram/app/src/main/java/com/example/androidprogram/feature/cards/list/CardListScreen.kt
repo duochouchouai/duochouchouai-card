@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -21,6 +22,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,9 +34,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
+import coil.request.ImageRequest
+import androidx.compose.foundation.ExperimentalFoundationApi
+import coil.compose.rememberAsyncImagePainter
 import com.example.androidprogram.model.Card
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -62,13 +66,20 @@ fun CardListScreen(
                 label = { Text("搜索姓名/公司") },
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             )
+            Row(modifier = Modifier.padding(horizontal = 16.dp)) {
+                FilterChip(selected = state.sort == "time", onClick = { vm.dispatch(CardListIntent.SortChanged("time")) }, label = { Text("按时间") })
+                FilterChip(selected = state.sort == "name", onClick = { vm.dispatch(CardListIntent.SortChanged("name")) }, label = { Text("按姓名") })
+                FilterChip(selected = state.sort == "company", onClick = { vm.dispatch(CardListIntent.SortChanged("company")) }, label = { Text("按公司") })
+                FilterChip(selected = state.sort == "category", onClick = { vm.dispatch(CardListIntent.SortChanged("category")) }, label = { Text("按分类") })
+            }
             Text(text = "新增名片", modifier = Modifier.padding(start = 16.dp).clickable { onAdd() })
             if (state.loading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                val listState = rememberLazyListState()
+                LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
                     items(items = state.cards, key = { it.id }) { card ->
                         CardRow(card = card, onOpen = { onOpen(card.id) }, onFavoriteToggle = { fav ->
                             vm.dispatch(CardListIntent.ToggleFavorite(card.id, fav))
@@ -106,6 +117,8 @@ private fun CardRow(card: Card, onOpen: () -> Unit, onFavoriteToggle: (Boolean) 
             Text(card.name)
             Text(card.position)
             if (!card.company.isNullOrBlank()) Text(card.company ?: "")
+            if (!card.address.isNullOrBlank()) Text(card.address ?: "")
+            if (!card.category.isNullOrBlank()) Text("分类：${card.category}")
         }
         Text(text = if (card.favorite) "已收藏" else "收藏", modifier = Modifier.clickable { onFavoriteToggle(!card.favorite) }.padding(8.dp))
         Text(text = "删除", modifier = Modifier.clickable { onDelete() }.padding(8.dp))

@@ -21,7 +21,7 @@ interface CardDao {
     fun getAll(): Flow<List<Card>>
 
     @Query(
-        "SELECT * FROM cards WHERE isDeleted = 0 AND (name LIKE :q OR company LIKE :q) ORDER BY name ASC"
+        "SELECT * FROM cards WHERE isDeleted = 0 AND (name LIKE :q OR company LIKE :q OR position LIKE :q OR department LIKE :q OR email LIKE :q OR phone LIKE :q OR address LIKE :q OR note LIKE :q OR category LIKE :q) ORDER BY name ASC"
     )
     fun searchByNameOrCompany(q: String): Flow<List<Card>>
 
@@ -31,4 +31,3 @@ interface CardDao {
     @Query("SELECT * FROM cards WHERE isDeleted = 0 AND favorite = 1 ORDER BY createdAt DESC")
     fun getFavorites(): Flow<List<Card>>
 }
-

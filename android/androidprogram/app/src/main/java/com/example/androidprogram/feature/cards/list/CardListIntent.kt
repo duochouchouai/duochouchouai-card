@@ -5,5 +5,5 @@ sealed class CardListIntent {
     data class Delete(val id: Long) : CardListIntent()
     data class ToggleFavorite(val id: Long, val favorite: Boolean) : CardListIntent()
     object Refresh : CardListIntent()
+    data class SortChanged(val sort: String) : CardListIntent()
 }
-

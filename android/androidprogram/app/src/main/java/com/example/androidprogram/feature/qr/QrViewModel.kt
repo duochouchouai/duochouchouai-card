@@ -39,7 +39,8 @@ class QrViewModel(private val repo: CardRepository, private val appContext: Cont
                 c.position,
                 c.company,
                 c.phone,
-                c.email
+                c.email,
+                c.address
             ).joinToString("|") else ""
             val matrix: BitMatrix = MultiFormatWriter().encode(payload, BarcodeFormat.QR_CODE, 640, 640)
             val bmp = Bitmap.createBitmap(matrix.width, matrix.height, Bitmap.Config.ARGB_8888)
@@ -60,6 +61,7 @@ class QrViewModel(private val repo: CardRepository, private val appContext: Cont
         val company = parts.getOrNull(2)
         val phone = parts.getOrNull(3)
         val email = parts.getOrNull(4)
+        val address = parts.getOrNull(5)
         viewModelScope.launch {
             repo.create(
                 Card(
@@ -69,6 +71,7 @@ class QrViewModel(private val repo: CardRepository, private val appContext: Cont
                     company = company,
                     phone = phone,
                     email = email,
+                    address = address,
                     favorite = true
                 )
             )

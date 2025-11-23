@@ -5,6 +5,6 @@ import com.example.androidprogram.model.Card
 data class CardListState(
     val loading: Boolean = false,
     val query: String = "",
-    val cards: List<Card> = emptyList()
+    val cards: List<Card> = emptyList(),
+    val sort: String = "time"
 )
-
