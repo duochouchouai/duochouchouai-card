@@ -3,6 +3,7 @@ package com.example.androidprogram.model
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.compose.runtime.Immutable
 
 @Entity(
     tableName = "cards",
@@ -18,6 +19,7 @@ import androidx.room.PrimaryKey
         Index(value = ["category"])
     ]
 )
+@Immutable
 data class Card(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,

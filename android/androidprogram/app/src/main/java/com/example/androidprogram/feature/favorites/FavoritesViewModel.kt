@@ -2,6 +2,7 @@ package com.example.androidprogram.feature.favorites
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.androidprogram.model.Card
 import com.example.androidprogram.repository.CardRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,10 +17,7 @@ class FavoritesViewModel(private val repo: CardRepository) : ViewModel() {
     init {
         viewModelScope.launch {
             repo.getFavorites().collectLatest { list ->
-                _state.update { s ->
-                    val sorted = applySort(list, s.sort)
-                    s.copy(cards = sorted)
-                }
+                _state.update { s -> s.copy(cards = applySort(list, s.sort)) }
             }
         }
     }
@@ -30,10 +28,7 @@ class FavoritesViewModel(private val repo: CardRepository) : ViewModel() {
                 _state.update { it.copy(query = intent.q) }
                 viewModelScope.launch {
                     repo.search(intent.q).collectLatest { list ->
-                        _state.update { s ->
-                            val favs = list.filter { c -> c.favorite }
-                            s.copy(cards = applySort(favs, s.sort))
-                        }
+                        _state.update { s -> s.copy(cards = applySort(list.filter { c -> c.favorite }, s.sort)) }
                     }
                 }
             }
@@ -42,29 +37,37 @@ class FavoritesViewModel(private val repo: CardRepository) : ViewModel() {
             }
             is FavoritesIntent.ToggleSelect -> {
                 _state.update { s ->
-                    val set = s.selected.toMutableSet()
-                    if (set.contains(intent.id)) set.remove(intent.id) else set.add(intent.id)
-                    s.copy(selected = set)
+                    val ns = if (s.selected.contains(intent.id)) s.selected - intent.id else s.selected + intent.id
+                    s.copy(selected = ns)
                 }
             }
             FavoritesIntent.SelectAll -> {
-                _state.update { s -> s.copy(selected = s.cards.map { it.id }.toSet()) }
+                val all = _state.value.cards.map { it.id }.toSet()
+                _state.update { it.copy(selected = all) }
             }
             FavoritesIntent.ClearSelection -> {
                 _state.update { it.copy(selected = emptySet()) }
             }
             FavoritesIntent.UnfavoriteSelected -> {
                 val ids = _state.value.selected
-                viewModelScope.launch {
-                    _state.value.cards.filter { ids.contains(it.id) }.forEach { c -> repo.update(c.copy(favorite = false)) }
-                    _state.update { it.copy(selected = emptySet()) }
+                if (ids.isNotEmpty()) {
+                    viewModelScope.launch {
+                        val current = _state.value.cards
+                        ids.forEach { id ->
+                            val c = current.find { it.id == id } ?: return@forEach
+                            repo.update(c.copy(favorite = false))
+                        }
+                        _state.update { it.copy(selected = emptySet()) }
+                    }
                 }
             }
             FavoritesIntent.DeleteSelected -> {
                 val ids = _state.value.selected
-                viewModelScope.launch {
-                    ids.forEach { id -> repo.delete(id) }
-                    _state.update { it.copy(selected = emptySet()) }
+                if (ids.isNotEmpty()) {
+                    viewModelScope.launch {
+                        ids.forEach { id -> repo.delete(id) }
+                        _state.update { it.copy(selected = emptySet()) }
+                    }
                 }
             }
             is FavoritesIntent.SortChanged -> {
@@ -73,7 +76,7 @@ class FavoritesViewModel(private val repo: CardRepository) : ViewModel() {
         }
     }
 
-    private fun applySort(list: List<com.example.androidprogram.model.Card>, sort: String): List<com.example.androidprogram.model.Card> = when (sort) {
+    private fun applySort(list: List<Card>, sort: String): List<Card> = when (sort) {
         "name" -> list.sortedBy { it.name }
         "company" -> list.sortedBy { it.company ?: "" }
         "category" -> list.sortedWith(compareBy({ it.category ?: "" }, { -it.createdAt }))

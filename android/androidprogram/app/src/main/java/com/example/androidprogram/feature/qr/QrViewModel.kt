@@ -54,7 +54,7 @@ class QrViewModel(private val repo: CardRepository, private val appContext: Cont
     }
 
     fun onScanResult(text: String) {
-        _state.update { it.copy(lastResult = text) }
+        _state.update { it.copy(lastResult = text, message = "识别成功，已收藏") }
         val parts = text.split("|")
         val name = parts.getOrNull(0) ?: return
         val position = parts.getOrNull(1) ?: ""
@@ -75,28 +75,34 @@ class QrViewModel(private val repo: CardRepository, private val appContext: Cont
                     favorite = true
                 )
             )
+            _state.update { it.copy(scanning = false) }
         }
     }
 
     private fun save() {
         val bmp = _state.value.qrBitmap ?: return
         viewModelScope.launch {
-            val resolver = appContext.contentResolver
-            val name = "card_qr_${System.currentTimeMillis()}"
-            val values = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, "$name.png")
-                put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    put(MediaStore.Images.Media.IS_PENDING, 1)
+            try {
+                val resolver = appContext.contentResolver
+                val name = "card_qr_${System.currentTimeMillis()}"
+                val values = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, "$name.png")
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        put(MediaStore.Images.Media.IS_PENDING, 1)
+                    }
                 }
-            }
-            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return@launch
-            resolver.openOutputStream(uri)?.use { out ->
-                bmp.compress(Bitmap.CompressFormat.PNG, 100, out)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val v = ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }
-                resolver.update(uri, v, null, null)
+                val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: throw RuntimeException("保存失败")
+                resolver.openOutputStream(uri)?.use { out ->
+                    bmp.compress(Bitmap.CompressFormat.PNG, 100, out)
+                } ?: throw RuntimeException("输出流为空")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val v = ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }
+                    resolver.update(uri, v, null, null)
+                }
+                _state.update { it.copy(message = "二维码已保存到相册") }
+            } catch (e: Exception) {
+                _state.update { it.copy(message = "保存失败: ${e.message}") }
             }
         }
     }

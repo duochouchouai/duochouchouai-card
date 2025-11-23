@@ -6,6 +6,6 @@ data class QrState(
     val generating: Boolean = false,
     val qrBitmap: Bitmap? = null,
     val scanning: Boolean = false,
-    val lastResult: String? = null
+    val lastResult: String? = null,
+    val message: String? = null
 )
-

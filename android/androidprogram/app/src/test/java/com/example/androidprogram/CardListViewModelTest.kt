@@ -8,12 +8,14 @@ import com.example.androidprogram.repository.CardRepository
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class CardListViewModelTest {
     private class FakeDao : CardDao {
         var updatedFavorite: Boolean? = null
@@ -29,11 +31,14 @@ class CardListViewModelTest {
     @Test
     fun toggleFavoriteUpdatesRepo() = runTest {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        val dao = FakeDao()
-        val vm = CardListViewModel(CardRepository(dao))
-        vm.dispatch(CardListIntent.ToggleFavorite(id = 1, favorite = true))
-        Thread.sleep(50)
-        assertTrue(dao.updatedFavorite == true)
-        Dispatchers.resetMain()
+        try {
+            val dao = FakeDao()
+            val vm = CardListViewModel(CardRepository(dao))
+            vm.dispatch(CardListIntent.ToggleFavorite(id = 1, favorite = true))
+            advanceUntilIdle()
+            assertTrue(dao.updatedFavorite == true)
+        } finally {
+            Dispatchers.resetMain()
+        }
     }
 }

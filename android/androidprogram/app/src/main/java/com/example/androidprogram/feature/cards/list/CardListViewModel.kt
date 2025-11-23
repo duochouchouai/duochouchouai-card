@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -26,7 +27,7 @@ class CardListViewModel(private val repo: CardRepository) : ViewModel() {
     private fun load() {
         viewModelScope.launch {
             _state.update { it.copy(loading = true) }
-            repo.getAll().collectLatest { list ->
+            repo.getAll().distinctUntilChanged().collectLatest { list ->
                 _state.update { s -> s.copy(loading = false, cards = applySort(list, s.sort)) }
             }
         }
@@ -36,9 +37,15 @@ class CardListViewModel(private val repo: CardRepository) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            queryFlow.debounce(150).flatMapLatest { q -> repo.search(q) }.collectLatest { list ->
-                _state.update { s -> s.copy(cards = applySort(list, s.sort)) }
-            }
+            queryFlow
+                .debounce(150)
+                .flatMapLatest { q ->
+                    val flow = if (q.isBlank()) repo.getAll() else repo.search(q)
+                    flow.distinctUntilChanged()
+                }
+                .collectLatest { list ->
+                    _state.update { s -> s.copy(cards = applySort(list, s.sort)) }
+                }
         }
     }
 
