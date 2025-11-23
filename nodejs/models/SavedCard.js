@@ -46,6 +46,12 @@ SavedCard.init(
       allowNull: false,
       defaultValue: DataTypes.NOW,
       comment: '收藏时间'
+    },
+     tags: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: false,
+      defaultValue: [],
+      comment: '标签分类，如 ["个人名片","工作名片"]'
     }
   },
   {

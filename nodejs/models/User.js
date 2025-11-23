@@ -25,6 +25,15 @@ User.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    avatar: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: '用户头像 DataURL'
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
   },
   {
     sequelize,
