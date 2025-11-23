@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
@@ -60,6 +61,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Work
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.ui.draw.shadow
@@ -78,42 +80,69 @@ fun CardListScreen(
     vm: CardListViewModel,
     onAdd: () -> Unit,
     onOpen: (Long) -> Unit,
+    onEdit: (Long) -> Unit,
     onOpenQR: () -> Unit,
     onOpenFavorites: () -> Unit,
     onLogout: () -> Unit
 ) {
     val state by vm.state.collectAsState()
     val pendingDeleteId = remember { mutableStateOf<Long?>(null) }
+    val logoutConfirm = remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { 
                     Text(
-                        "名片列表",
+                        "我的名片",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold
                         )
                     )
                 },
                 actions = {
-                    IconButton(onClick = onOpenQR) { 
+                    Row(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .clickable { onOpenQR() },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Icon(
-                            Icons.Filled.QrCode, 
-                            contentDescription = "二维码",
-                            tint = MaterialTheme.colorScheme.primary
+                            Icons.Filled.QrCodeScanner,
+                            contentDescription = "扫码添加",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "扫码添加",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium
                         )
                     }
-                    IconButton(onClick = onOpenFavorites) { 
+                    Row(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .clickable { onOpenFavorites() },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Icon(
-                            Icons.Filled.Star, 
+                            Icons.Filled.Star,
                             contentDescription = "收藏",
                             tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "收藏",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                     Text(
                         text = "退出登录",
                         modifier = Modifier
-                            .clickable { onLogout() }
+                            .clickable { logoutConfirm.value = true }
                             .padding(12.dp),
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelMedium
@@ -474,7 +503,8 @@ fun CardListScreen(
                                 onFavoriteToggle = { fav ->
                                     vm.dispatch(CardListIntent.ToggleFavorite(card.id, fav))
                                 },
-                                onDelete = { pendingDeleteId.value = card.id }
+                                onDelete = { pendingDeleteId.value = card.id },
+                                onEdit = { onEdit(card.id) }
                             )
                         }
                     }
@@ -522,13 +552,49 @@ fun CardListScreen(
                         "此操作将删除选中的名片",
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    Text(
-                        "删除后可在数据中标记软删除",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
                 }
+            }
+        )
+    }
+    if (logoutConfirm.value) {
+        AlertDialog(
+            onDismissRequest = { logoutConfirm.value = false },
+            confirmButton = {
+                Text(
+                    text = "确认退出",
+                    modifier = Modifier
+                        .clickable {
+                            logoutConfirm.value = false
+                            onLogout()
+                        }
+                        .padding(12.dp),
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Medium
+                )
+            },
+            dismissButton = {
+                Text(
+                    text = "取消",
+                    modifier = Modifier
+                        .clickable { logoutConfirm.value = false }
+                        .padding(12.dp),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text(
+                    "确认退出登录",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            },
+            text = {
+                Text(
+                    "退出后需重新登录",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         )
     }
@@ -537,7 +603,7 @@ fun CardListScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun CardRow(card: Card, onOpen: () -> Unit, onFavoriteToggle: (Boolean) -> Unit, onDelete: () -> Unit) {
+private fun CardRow(card: Card, onOpen: () -> Unit, onFavoriteToggle: (Boolean) -> Unit, onDelete: () -> Unit, onEdit: () -> Unit) {
     val gradientColors = listOf(
         MaterialTheme.colorScheme.primaryContainer,
         MaterialTheme.colorScheme.secondaryContainer
@@ -670,6 +736,27 @@ private fun CardRow(card: Card, onOpen: () -> Unit, onFavoriteToggle: (Boolean) 
                             )
                         }
                     }
+                    // Department with icon
+                    if (!card.department.isNullOrBlank()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Work,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = card.department!!,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                     
                     // Category badge
                     if (!card.category.isNullOrBlank()) {
@@ -708,6 +795,21 @@ private fun CardRow(card: Card, onOpen: () -> Unit, onFavoriteToggle: (Boolean) 
                             imageVector = if (card.favorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
                             contentDescription = if (card.favorite) "取消收藏" else "收藏",
                             tint = if (card.favorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier
+                            .background(
+                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
+                                shape = CircleShape
+                            )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = "编辑",
+                            tint = MaterialTheme.colorScheme.secondary
                         )
                     }
                     

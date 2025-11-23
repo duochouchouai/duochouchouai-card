@@ -54,14 +54,14 @@ class MainActivity : ComponentActivity() {
                         Routes.Login,
                         enterTransition = {
                             slideIntoContainer(
-                                AnimatedContentTransitionScope.SlideDirection.Up,
-                                animationSpec = tween(700, easing = EaseOut)
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(600, easing = EaseInOut)
                             )
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                AnimatedContentTransitionScope.SlideDirection.Down,
-                                animationSpec = tween(700, easing = EaseInOut)
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(600, easing = EaseInOut)
                             )
                         }
                     ) {
@@ -93,6 +93,7 @@ class MainActivity : ComponentActivity() {
                             vm = vm,
                             onAdd = { nav.navigate(Routes.CardEdit) },
                             onOpen = { id -> nav.navigate("${Routes.CardDetail}/$id") },
+                            onEdit = { id -> nav.navigate("${Routes.CardEdit}/$id") },
                             onOpenQR = { nav.navigate(Routes.Qr) },
                             onOpenFavorites = { nav.navigate(Routes.Favorites) },
                             onLogout = {
@@ -107,20 +108,43 @@ class MainActivity : ComponentActivity() {
                         Routes.CardEdit,
                         enterTransition = {
                             slideIntoContainer(
-                                AnimatedContentTransitionScope.SlideDirection.Up,
-                                animationSpec = tween(500, easing = EaseOut)
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(600, easing = EaseInOut)
                             )
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                AnimatedContentTransitionScope.SlideDirection.Down,
-                                animationSpec = tween(500, easing = EaseInOut)
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(600, easing = EaseInOut)
                             )
                         }
                     ) {
                         val repo = ServiceLocator.provideCardRepository(this@MainActivity)
                         val vm: CardEditViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = CardEditViewModelFactory(repo, null))
                         CardEditScreen(vm = vm, onBack = { nav.popBackStack() }) { id ->
+                            nav.popBackStack()
+                        }
+                    }
+                    composable(
+                        route = "${Routes.CardEdit}/{id}",
+                        arguments = listOf(navArgument("id") { type = NavType.LongType }),
+                        enterTransition = {
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(600, easing = EaseInOut)
+                            )
+                        },
+                        exitTransition = {
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(600, easing = EaseInOut)
+                            )
+                        }
+                    ) { backStackEntry ->
+                        val repo = ServiceLocator.provideCardRepository(this@MainActivity)
+                        val id = backStackEntry.arguments?.getLong("id") ?: 0L
+                        val vm: CardEditViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = CardEditViewModelFactory(repo, id))
+                        CardEditScreen(vm = vm, onBack = { nav.popBackStack() }) { _ ->
                             nav.popBackStack()
                         }
                     }
@@ -160,14 +184,14 @@ class MainActivity : ComponentActivity() {
                         arguments = listOf(navArgument("id") { type = NavType.LongType; defaultValue = 0L }),
                         enterTransition = {
                             slideIntoContainer(
-                                AnimatedContentTransitionScope.SlideDirection.Up,
-                                animationSpec = tween(500, easing = EaseOut)
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(600, easing = EaseInOut)
                             )
                         },
                         exitTransition = {
                             slideOutOfContainer(
-                                AnimatedContentTransitionScope.SlideDirection.Down,
-                                animationSpec = tween(500, easing = EaseInOut)
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(600, easing = EaseInOut)
                             )
                         }
                     ) {
@@ -175,7 +199,7 @@ class MainActivity : ComponentActivity() {
                         val vm: QrViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = QrViewModelFactory(repo, applicationContext))
                         val id = it.arguments?.getLong("id") ?: 0L
                         if (id > 0) vm.dispatch(com.example.androidprogram.feature.qr.QrIntent.GenerateForCard(id))
-                        QrScreen(vm, onBack = { nav.popBackStack() })
+                        QrScreen(vm, onBack = { nav.popBackStack() }, shareOnly = id > 0)
                     }
                     composable(
                         Routes.Favorites,
@@ -194,7 +218,14 @@ class MainActivity : ComponentActivity() {
                     ) {
                         val repo = ServiceLocator.provideCardRepository(this@MainActivity)
                         val vm: com.example.androidprogram.feature.favorites.FavoritesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = com.example.androidprogram.feature.favorites.FavoritesViewModelFactory(repo))
-                        com.example.androidprogram.feature.favorites.FavoritesScreen(vm = vm, onBack = { nav.popBackStack() }, onOpen = { id -> nav.navigate("${Routes.CardDetail}/$id") })
+                        com.example.androidprogram.feature.favorites.FavoritesScreen(
+                            vm = vm,
+                            onBack = { nav.popBackStack() },
+                            onOpen = { id -> nav.navigate("${Routes.CardDetail}/$id") },
+                            onEdit = { id -> nav.navigate("${Routes.CardEdit}/$id") },
+                            onAdd = { nav.navigate(Routes.CardEdit) },
+                            onOpenQR = { nav.navigate(Routes.Qr) }
+                        )
                     }
                 }
             }

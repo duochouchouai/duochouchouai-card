@@ -163,7 +163,11 @@ fun ExpandableFloatingActionButton(
                         // Action label
                         Card(
                             modifier = Modifier
-                                .padding(end = 8.dp),
+                                .padding(end = 8.dp)
+                                .clickable {
+                                    expanded = false
+                                    action.onClick()
+                                },
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
                             ),

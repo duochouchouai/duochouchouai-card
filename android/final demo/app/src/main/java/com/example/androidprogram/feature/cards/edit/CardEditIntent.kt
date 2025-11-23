@@ -12,4 +12,6 @@ sealed class CardEditIntent {
     data class AddressChanged(val v: String) : CardEditIntent()
     data class NoteChanged(val v: String) : CardEditIntent()
     object Save : CardEditIntent()
+    object SaveToList : CardEditIntent()
+    object SaveToFavorites : CardEditIntent()
 }

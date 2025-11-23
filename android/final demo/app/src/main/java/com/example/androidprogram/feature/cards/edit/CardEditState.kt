@@ -12,5 +12,6 @@ data class CardEditState(
     val address: String = "",
     val note: String = "",
     val saving: Boolean = false,
-    val canSave: Boolean = false
+    val canSave: Boolean = false,
+    val isEditing: Boolean = false
 )

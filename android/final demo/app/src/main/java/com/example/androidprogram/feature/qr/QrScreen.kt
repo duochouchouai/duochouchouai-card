@@ -74,7 +74,7 @@ import androidx.compose.animation.slideOutVertically
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun QrScreen(vm: QrViewModel, onBack: () -> Unit) {
+fun QrScreen(vm: QrViewModel, onBack: () -> Unit, shareOnly: Boolean = false) {
     val s by vm.state.collectAsState()
     val ctx = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -90,7 +90,7 @@ fun QrScreen(vm: QrViewModel, onBack: () -> Unit) {
             androidx.compose.material3.TopAppBar(
                 title = { 
                     Text(
-                        "二维码工具",
+                        if (shareOnly) "二维码分享" else "扫码添加",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -127,100 +127,103 @@ fun QrScreen(vm: QrViewModel, onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // QR Code Generation Section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+            if (shareOnly) {
+                // QR Code Share Section (only when entering with id)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(
-                            Icons.Filled.QrCodeScanner,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            "二维码生成",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                    }
-                    
-                    if (s.qrBitmap != null) {
-                        Card(
-                            modifier = Modifier
-                                .size(200.dp)
-                                .shadow(
-                                    elevation = 8.dp,
-                                    shape = RoundedCornerShape(12.dp)
-                                ),
-                            shape = RoundedCornerShape(12.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Image(
-                                painter = rememberAsyncImagePainter(s.qrBitmap),
-                                contentDescription = "生成的二维码",
-                                modifier = Modifier.fillMaxSize()
+                            Icon(
+                                Icons.Filled.QrCodeScanner,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                "二维码",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold
+                                )
                             )
                         }
-                    }
-                    
-                    val mediaPermission = if (android.os.Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES else Manifest.permission.READ_EXTERNAL_STORAGE
-                    val hasMediaPerm = remember(mediaPermission) { 
-                        mutableStateOf(
-                            ContextCompat.checkSelfPermission(ctx, mediaPermission) == PackageManager.PERMISSION_GRANTED
-                        )
-                    }
-                    val mediaLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-                        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
-                    ) { granted ->
-                        hasMediaPerm.value = granted
-                        if (granted) vm.dispatch(QrIntent.SaveGenerated)
-                    }
-                    
-                    Button(
-                        onClick = {
-                            if (android.os.Build.VERSION.SDK_INT >= 33) {
-                                if (hasMediaPerm.value) vm.dispatch(QrIntent.SaveGenerated) 
-                                else mediaLauncher.launch(mediaPermission)
-                            } else vm.dispatch(QrIntent.SaveGenerated)
-                        },
-                        enabled = s.qrBitmap != null,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.Save,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("保存到相册")
-                    }
-                    
-                    if (s.generating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        
+                        if (s.qrBitmap != null) {
+                            Card(
+                                modifier = Modifier
+                                    .size(200.dp)
+                                    .shadow(
+                                        elevation = 8.dp,
+                                        shape = RoundedCornerShape(12.dp)
+                                    ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(s.qrBitmap),
+                                    contentDescription = "生成的二维码",
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
+                        
+                        val mediaPermission = if (android.os.Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES else Manifest.permission.READ_EXTERNAL_STORAGE
+                        val hasMediaPerm = remember(mediaPermission) { 
+                            mutableStateOf(
+                                ContextCompat.checkSelfPermission(ctx, mediaPermission) == PackageManager.PERMISSION_GRANTED
+                            )
+                        }
+                        val mediaLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                            contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+                        ) { granted ->
+                            hasMediaPerm.value = granted
+                            if (granted) vm.dispatch(QrIntent.SaveGenerated)
+                        }
+                        
+                        Button(
+                            onClick = {
+                                if (android.os.Build.VERSION.SDK_INT >= 33) {
+                                    if (hasMediaPerm.value) vm.dispatch(QrIntent.SaveGenerated) 
+                                    else mediaLauncher.launch(mediaPermission)
+                                } else vm.dispatch(QrIntent.SaveGenerated)
+                            },
+                            enabled = s.qrBitmap != null,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Save,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("保存到相册")
+                        }
+                        
+                        if (s.generating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }
             
+            if (!shareOnly) {
             // QR Code Scanning Section
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -363,6 +366,7 @@ fun QrScreen(vm: QrViewModel, onBack: () -> Unit) {
                         }
                     }
                 }
+            }
             }
             
             // Scan Results

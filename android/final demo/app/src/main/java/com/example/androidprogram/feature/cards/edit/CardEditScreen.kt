@@ -28,6 +28,8 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
@@ -78,7 +80,7 @@ fun CardEditScreen(vm: CardEditViewModel, onBack: () -> Unit, onSaved: (Long) ->
             TopAppBar(
                 title = { 
                     Text(
-                        if (s.name.isBlank() && s.avatarUri.isBlank() && s.position.isBlank()) "添加名片" else "编辑名片",
+                        if (s.isEditing) "编辑名片" else "添加名片",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -161,7 +163,7 @@ fun CardEditScreen(vm: CardEditViewModel, onBack: () -> Unit, onSaved: (Long) ->
                                 .size(100.dp)
                                 .border(
                                     width = 3.dp,
-                                    color = if (s.avatarUri.isBlank()) MaterialTheme.colorScheme.error.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                    color = if (s.avatarUri.isBlank()) MaterialTheme.colorScheme.outline.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                                     shape = CircleShape
                                 )
                                 .shadow(
@@ -190,14 +192,7 @@ fun CardEditScreen(vm: CardEditViewModel, onBack: () -> Unit, onSaved: (Long) ->
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             },
-                            isError = s.avatarUri.isBlank(),
-                            supportingText = { 
-                                if (s.avatarUri.isBlank()) {
-                                    Text("必填，可使用资源URI", color = MaterialTheme.colorScheme.error)
-                                } else {
-                                    Text("头像链接已设置", color = MaterialTheme.colorScheme.primary)
-                                }
-                            },
+                            
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
@@ -257,27 +252,6 @@ fun CardEditScreen(vm: CardEditViewModel, onBack: () -> Unit, onSaved: (Long) ->
                         )
                         
                         OutlinedTextField(
-                            value = s.position,
-                            onValueChange = { vm.dispatch(CardEditIntent.PositionChanged(it), onSaved) },
-                            label = { Text("职位") },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Filled.Work,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.secondary
-                                )
-                            },
-                            isError = s.position.isBlank(),
-                            supportingText = { if (s.position.isBlank()) Text("必填", color = MaterialTheme.colorScheme.error) },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.secondary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                            )
-                        )
-                        
-                        OutlinedTextField(
                             value = s.company,
                             onValueChange = { vm.dispatch(CardEditIntent.CompanyChanged(it), onSaved) },
                             label = { Text("公司") },
@@ -295,14 +269,14 @@ fun CardEditScreen(vm: CardEditViewModel, onBack: () -> Unit, onSaved: (Long) ->
                                 unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                             )
                         )
-                        
+
                         OutlinedTextField(
-                            value = s.category,
-                            onValueChange = { vm.dispatch(CardEditIntent.CategoryChanged(it), onSaved) },
-                            label = { Text("分类") },
+                            value = s.department,
+                            onValueChange = { vm.dispatch(CardEditIntent.DepartmentChanged(it), onSaved) },
+                            label = { Text("部门") },
                             leadingIcon = {
                                 Icon(
-                                    Icons.Filled.Label,
+                                    Icons.Filled.Work,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary
                                 )
@@ -314,11 +288,38 @@ fun CardEditScreen(vm: CardEditViewModel, onBack: () -> Unit, onSaved: (Long) ->
                                 unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                             )
                         )
-                        
+
                         OutlinedTextField(
-                            value = s.department,
-                            onValueChange = { vm.dispatch(CardEditIntent.DepartmentChanged(it), onSaved) },
-                            label = { Text("部门") },
+                            value = s.position,
+                            onValueChange = { vm.dispatch(CardEditIntent.PositionChanged(it), onSaved) },
+                            label = { Text("职位") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Filled.Work,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.secondary
+                                )
+                            },
+                            
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                            )
+                        )
+
+                        OutlinedTextField(
+                            value = s.category,
+                            onValueChange = { vm.dispatch(CardEditIntent.CategoryChanged(it), onSaved) },
+                            label = { Text("分类") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Filled.Label,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
@@ -484,36 +485,64 @@ fun CardEditScreen(vm: CardEditViewModel, onBack: () -> Unit, onSaved: (Long) ->
                     }
                 }
                 
-                // Save Button
-                Button(
-                    onClick = { vm.dispatch(CardEditIntent.Save, onSaved) },
-                    enabled = s.canSave && !s.saving,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp)
+                // Save Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (s.saving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
+                    Button(
+                        onClick = { vm.dispatch(CardEditIntent.SaveToList, onSaved) },
+                        enabled = s.canSave && !s.saving,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        if (s.saving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
-                            Text(
-                                "保存",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = FontWeight.Medium
+                        } else {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Filled.Save, contentDescription = null, modifier = Modifier.size(20.dp))
+                                Text(
+                                    "保存到我的",
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium)
                                 )
+                            }
+                        }
+                    }
+                    Button(
+                        onClick = { vm.dispatch(CardEditIntent.SaveToFavorites, onSaved) },
+                        enabled = s.canSave && !s.saving,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        if (s.saving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onSecondary
                             )
+                        } else {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(20.dp))
+                                Text(
+                                    "保存到收藏",
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium)
+                                )
+                            }
                         }
                     }
                 }

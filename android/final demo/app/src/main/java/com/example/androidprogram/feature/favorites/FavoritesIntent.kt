@@ -9,4 +9,6 @@ sealed class FavoritesIntent {
     object UnfavoriteSelected : FavoritesIntent()
     object DeleteSelected : FavoritesIntent()
     data class SortChanged(val sort: String) : FavoritesIntent()
+    data class ToggleFavorite(val id: Long, val favorite: Boolean) : FavoritesIntent()
+    data class DeleteSingle(val id: Long) : FavoritesIntent()
 }

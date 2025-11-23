@@ -15,6 +15,7 @@ class CardEditViewModel(private val repo: CardRepository, private val editingId:
 
     init {
         if (editingId != null) {
+            _state.update { it.copy(isEditing = true) }
             viewModelScope.launch {
                 val card = repo.getById(editingId)
                 if (card != null) {
@@ -28,12 +29,9 @@ class CardEditViewModel(private val repo: CardRepository, private val editingId:
                             category = card.category ?: "",
                             phone = card.phone ?: "",
                             email = card.email ?: "",
-                            address = card.address ?: "",
-                            note = card.note ?: "",
+                            isEditing = true,
                             canSave = validate(
                                 card.name,
-                                card.avatarUri,
-                                card.position,
                                 card.phone ?: "",
                                 card.email ?: ""
                             )
@@ -44,10 +42,10 @@ class CardEditViewModel(private val repo: CardRepository, private val editingId:
         }
     }
 
-    private fun validate(name: String, avatar: String, position: String, phone: String, email: String): Boolean {
+    private fun validate(name: String, phone: String, email: String): Boolean {
         val phoneOk = phone.isBlank() || phone.matches(Regex("^1\\d{10}$"))
         val emailOk = email.isBlank() || email.contains("@")
-        return name.isNotBlank() && avatar.isNotBlank() && position.isNotBlank() && phoneOk && emailOk
+        return name.isNotBlank() && phoneOk && emailOk
     }
 
     fun dispatch(intent: CardEditIntent, onSaved: (Long) -> Unit) {
@@ -62,18 +60,20 @@ class CardEditViewModel(private val repo: CardRepository, private val editingId:
             is CardEditIntent.EmailChanged -> update { it.copy(email = intent.v) }
             is CardEditIntent.AddressChanged -> update { it.copy(address = intent.v) }
             is CardEditIntent.NoteChanged -> update { it.copy(note = intent.v) }
-            CardEditIntent.Save -> save(onSaved)
+            CardEditIntent.Save -> save(false, onSaved)
+            CardEditIntent.SaveToList -> save(false, onSaved)
+            CardEditIntent.SaveToFavorites -> save(true, onSaved)
         }
     }
 
     private fun update(block: (CardEditState) -> CardEditState) {
         _state.update { s ->
             val ns = block(s)
-            ns.copy(canSave = validate(ns.name, ns.avatarUri, ns.position, ns.phone, ns.email))
+            ns.copy(canSave = validate(ns.name, ns.phone, ns.email))
         }
     }
 
-    private fun save(onSaved: (Long) -> Unit) {
+    private fun save(toFavorites: Boolean, onSaved: (Long) -> Unit) {
         val s = _state.value
         if (!s.canSave) return
         viewModelScope.launch {
@@ -90,7 +90,8 @@ class CardEditViewModel(private val repo: CardRepository, private val editingId:
                         phone = s.phone.ifBlank { null },
                         email = s.email.ifBlank { null },
                         address = s.address.ifBlank { null },
-                        note = s.note.ifBlank { null }
+                        note = s.note.ifBlank { null },
+                        favorite = toFavorites
                     )
                 )
             } else {

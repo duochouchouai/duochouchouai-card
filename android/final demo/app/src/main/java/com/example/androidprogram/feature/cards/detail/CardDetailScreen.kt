@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Work
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocationOn
@@ -238,28 +239,6 @@ fun CardDetailScreen(vm: CardDetailViewModel, id: Long, onGenerateQr: (Long) -> 
                                             textAlign = TextAlign.Center
                                         )
                                         
-                                        // Position
-                                        if (c.position.isNotBlank()) {
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                Icon(
-                                                    Icons.Filled.Person,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(20.dp),
-                                                    tint = MaterialTheme.colorScheme.primary
-                                                )
-                                                Text(
-                                                    text = c.position,
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                        }
-                                        
-                                        // Company
                                         if (!c.company.isNullOrBlank()) {
                                             Spacer(modifier = Modifier.height(8.dp))
                                             Row(
@@ -274,6 +253,66 @@ fun CardDetailScreen(vm: CardDetailViewModel, id: Long, onGenerateQr: (Long) -> 
                                                 )
                                                 Text(
                                                     text = c.company!!,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                        if (!c.category.isNullOrBlank()) {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .background(
+                                                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                                                            shape = RoundedCornerShape(12.dp)
+                                                        )
+                                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = c.category!!,
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        if (!c.department.isNullOrBlank()) {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Filled.Work,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp),
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                                Text(
+                                                    text = c.department!!,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                        if (c.position.isNotBlank()) {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Filled.Person,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp),
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                                Text(
+                                                    text = c.position,
                                                     style = MaterialTheme.typography.titleMedium,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
@@ -374,28 +413,7 @@ fun CardDetailScreen(vm: CardDetailViewModel, id: Long, onGenerateQr: (Long) -> 
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         
-                                        // Category
-                                        if (!c.category.isNullOrBlank()) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                            ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .background(
-                                                            color = MaterialTheme.colorScheme.tertiaryContainer,
-                                                            shape = RoundedCornerShape(8.dp)
-                                                        )
-                                                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                                                ) {
-                                                    Text(
-                                                        text = c.category!!,
-                                                        style = MaterialTheme.typography.labelMedium,
-                                                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                                                    )
-                                                }
-                                            }
-                                        }
+                                        
                                         
                                         // Note
                                         if (!c.note.isNullOrBlank()) {
@@ -418,20 +436,6 @@ fun CardDetailScreen(vm: CardDetailViewModel, id: Long, onGenerateQr: (Long) -> 
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 Button(
-                                    onClick = { vm.dispatch(CardDetailIntent.Share) },
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Share,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("分享")
-                                }
-                                
-                                Button(
                                     onClick = { onGenerateQr(c.id) },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp)
@@ -442,7 +446,7 @@ fun CardDetailScreen(vm: CardDetailViewModel, id: Long, onGenerateQr: (Long) -> 
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("生成二维码")
+                                    Text("分享")
                                 }
                             }
                             

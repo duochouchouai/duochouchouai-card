@@ -27,8 +27,12 @@ class FavoritesViewModel(private val repo: CardRepository) : ViewModel() {
             is FavoritesIntent.QueryChanged -> {
                 _state.update { it.copy(query = intent.q) }
                 viewModelScope.launch {
-                    repo.search(intent.q).collectLatest { list ->
-                        _state.update { s -> s.copy(cards = applySort(list.filter { c -> c.favorite }, s.sort)) }
+                    val q = intent.q.trim()
+                    repo.getFavorites().collectLatest { list ->
+                        val filtered = if (q.isBlank()) list else list.filter { c ->
+                            c.name.contains(q, true) || (c.company?.contains(q, true) ?: false) || c.position.contains(q, true)
+                        }
+                        _state.update { s -> s.copy(cards = applySort(filtered, s.sort)) }
                     }
                 }
             }
@@ -72,6 +76,13 @@ class FavoritesViewModel(private val repo: CardRepository) : ViewModel() {
             }
             is FavoritesIntent.SortChanged -> {
                 _state.update { s -> s.copy(sort = intent.sort, cards = applySort(s.cards, intent.sort)) }
+            }
+            is FavoritesIntent.ToggleFavorite -> {
+                val card = _state.value.cards.find { it.id == intent.id } ?: return
+                viewModelScope.launch { repo.update(card.copy(favorite = intent.favorite)) }
+            }
+            is FavoritesIntent.DeleteSingle -> {
+                viewModelScope.launch { repo.delete(intent.id) }
             }
         }
     }
