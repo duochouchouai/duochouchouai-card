@@ -26,6 +26,12 @@ Card.init(
       unique: true, // 唯一约束（避免重复）
       defaultValue: DataTypes.UUIDV4, // 自动生成 UUID V4（关键！）
       comment: '名片唯一标识（UUID）'
+    },
+    tags: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: false,
+      defaultValue: [],
+      comment: '标签分类，如 ["个人名片","工作名片"]'
     }
   },
   {

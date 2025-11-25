@@ -1,0 +1,14 @@
+{
+  "development": {
+    "username": "kangletian",
+    "password": "klt060410",
+    "database": "testdb",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres",
+    "define": {
+      "freezeTableName": true,
+      "timestamps": false
+    }
+  }
+}
