@@ -20,6 +20,13 @@ Card.init(
     qrCode: {
       type: DataTypes.STRING, // 存储二维码DataURL
     },
+    cardUniqueId: {
+      type: DataTypes.UUID, // 字段类型为 UUID
+      allowNull: false, // 非空约束（和 SavedCard 一致）
+      unique: true, // 唯一约束（避免重复）
+      defaultValue: DataTypes.UUIDV4, // 自动生成 UUID V4（关键！）
+      comment: '名片唯一标识（UUID）'
+    }
   },
   {
     sequelize,

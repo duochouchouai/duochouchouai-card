@@ -101,8 +101,6 @@ paths:
       summary: 展示个人名片二维码
       description: |
         获取已生成的个人名片二维码（需授权）
-        - 优先返回缓存的 Base64 编码，未生成则自动触发生成
-        - 支持直接用于前端展示，无需二次处理
       security:
         - bearerAuth: []
       parameters:
@@ -116,7 +114,7 @@ paths:
           example: 1001
       responses:
         '200':
-          description: 获取成功（返回二维码 Base64 编码）
+          description: 获取成功
           content:
             application/json:
               schema:
@@ -133,7 +131,7 @@ paths:
                     properties:
                       qrCodeBase64:
                         type: string
-                        description: 二维码 Base64 编码（前端直接渲染）
+                        description: 二维码
                         example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
                       cardUniqueId:
                         type: string
