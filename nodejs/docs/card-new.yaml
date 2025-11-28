@@ -1,0 +1,79 @@
+paths:
+  /cards/avatar:
+    patch:
+      tags: [名片管理]
+      summary: 上传个人头像
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  description: 头像 DataURL (data:image/png;base64,...)
+      responses:
+        '200':
+          description: 上传成功
+
+  /cards/{cardUniqueId}/tags:
+    post:
+      tags: [名片标签]
+      summary: 给名片添加标签
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: cardUniqueId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag:
+                  type: string
+                  example: 工作名片
+      responses:
+        '200':
+          description: 添加成功
+
+    delete:
+      tags: [名片标签]
+      summary: 删除名片标签
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: cardUniqueId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: tag
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+
+  /cards/saved/{savedCardId}/tags:
+    post:
+      summary: 给收藏的名片添加标签
+      tags: [收藏标签]
+      security:
+        - bearerAuth: []
+      # ... 同上结构
+    delete:
+      summary: 删除收藏标签
+      tags: [收藏标签]
+      security:
+        - bearerAuth: []

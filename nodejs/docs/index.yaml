@@ -1,0 +1,61 @@
+openapi: 3.0.3
+info:
+  title: 名片管理系统 API 文档
+  description: |
+    ## 项目介绍
+    本项目是一套完整的用户注册、登录及名片管理后端接口，采用 Node.js + PostgreSQL 实现。
+
+    ## 主要功能
+    - 用户注册与登录（支持用户名或手机号登录，JWT 鉴权）
+    - 创建、管理多张个人名片并生成专属二维码
+    - 扫描他人名片二维码一键保存
+    - 名片与收藏名片均支持自定义标签分类
+    - 支持按标签筛选查看名片
+    - 支持关键词模糊搜索（姓名、部门、公司、邮箱、电话、备注）
+    - 个人头像上传与展示
+    - 修改密码、注销账户（注销时自动清理所有相关数据）
+
+    ## API 模块
+    - 用户管理
+    - 名片管理
+    - 名片标签
+    - 收藏管理
+    - 收藏标签
+    - 二维码功能
+
+    所有接口均已接入 Swagger 在线文档，支持实时调试与查看。
+
+  version: 1.0.0
+  contact:
+    name: 亢乐天
+    email: 3864124983@qq.com
+    url: https://github.com/duochouchouai/duochouchouai-card
+
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:3000/v1
+    description: 本地开发环境
+
+paths:
+  /api/health:
+    get:
+      summary: 服务健康检查
+      description: 用于检测服务是否正常运行
+      responses:
+        '200':
+          description: 服务正常
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                      type: string
+                      example: "2025-11-23T16:00:00.000Z"
+                  database:
+                    type: string
+                    example: connected

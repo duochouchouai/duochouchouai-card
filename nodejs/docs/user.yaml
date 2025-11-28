@@ -1,0 +1,50 @@
+paths:
+  /auth/change-password:
+    patch:
+      tags: [用户管理]
+      summary: 修改密码
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldPassword:
+                  type: string
+                  description: 旧密码
+                newPassword:
+                  type: string
+                  description: 新密码（≥6位）
+              required: [oldPassword, newPassword]
+      responses:
+        '200':
+          description: 修改成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 密码修改成功
+
+  /auth/delete-account:
+    delete:
+      tags: [用户管理]
+      summary: 注销账户（彻底删除所有数据）
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 账户已注销
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 账户已彻底注销，所有数据已清除
